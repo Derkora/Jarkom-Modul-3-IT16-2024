@@ -1,0 +1,9 @@
+mysql -u root -p
+
+CREATE USER 'kelompokit16'@'%' IDENTIFIED BY 'passwordit16';
+CREATE USER 'kelompokit16'@'localhost' IDENTIFIED BY 'passwordit16';
+CREATE DATABASE dbkelompokit16;
+GRANT ALL PRIVILEGES ON *.* TO 'kelompokit16'@'%';
+GRANT ALL PRIVILEGES ON *.* TO 'kelompokit16'@'localhost';
+FLUSH PRIVILEGES;
+exit
