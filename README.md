@@ -226,6 +226,276 @@ Seiring berjalannya waktu kondisi semakin memanas, untuk bersiap perang. Klan Ha
 
 penyelesaian:
 
+## Soal 6 
+---
+Jalankan ini pada worker PhP (Vladimir, Rabban, Feyd)
+---
+```
+echo nameserver 192.241.3.3 > /etc/resolv.conf
+apt-get update
+apt-get install lynx -y
+apt-get install wget -y
+apt-get install unzip -y
+apt-get install nginx -y
+apt-get install php7.3 -y
+apt-get install php7.3-fpm -y
+
+mkdir -p /var/www/harkonen.it16.com
+
+wget --no-check-certificate 'https://drive.google.com/uc?export=download&id=1lmnXJUbyx1JDt2OA5z_1dEowxozfkn30' -O /var/www/harkonen.it16.com.zip
+unzip /var/www/harkonen.it16.com.zip -d /var/www/harkonen.it16.com
+mv /var/www/harkonen.it16.com/modul-3 /var/www/harkonen.it16.com
+rm -rf /var/www/harkonen.it16.com.zip
+
+echo '
+server {
+
+        listen 80;
+
+        root /var/www/harkonen.it16.com;
+
+        index index.php index.html index.htm;
+        server_name _;
+
+        location / {
+                        try_files $uri $uri/ /index.php?$query_string;
+        }
+
+        # pass PHP scripts to FastCGI server
+        location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php7.3-fpm.sock;
+        }
+
+location ~ /\.ht {
+                        deny all;
+        }
+
+        error_log /var/log/nginx/jarkom_error.log;
+        access_log /var/log/nginx/jarkom_access.log;
+ }' > /etc/nginx/sites-available/harkonen.it16.com
+
+echo '
+<!DOCTYPE html>
+<html>
+<head>
+    <title>House of Harkonen</title>
+    <link rel="stylesheet" type="text/css" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>This is Harkonen</h1>
+        <p><?php
+            $hostname = gethostname();
+            echo "Request ini dihandle oleh: $hostname<br>"; ?> </p>
+        <p>Enter your name to validate:</p>
+        <form method="POST" action="index.php">
+            <input type="text" name="name" id="nameInput">
+            <button type="submit" id="submitButton">Submit</button>
+        </form>
+        <p id="greeting"><?php
+            if(isset($_POST['name'])) {
+                $name = $_POST['name'];
+                echo "Hello, $name!";
+            }
+        ?></p>
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
+' > /var/www/harkonen.it16.com/index.php
+
+ln -s /etc/nginx/sites-available/harkonen.it16.com /etc/nginx/sites-enabled
+rm -rf /etc/nginx/sites-enabled/default
+
+service php7.3-fpm start
+service php7.3-fpm restart
+service nginx restart
+nginx -t
+```
+
+Jalankan ini pada Load Balancer (Stilgar)
+```
+echo 'nameserver 192.241.3.3' > /etc/resolv.conf
+apt-get update
+apt-get install apache2-utils -y
+apt-get install nginx -y
+apt-get install lynx -y
+
+service nginx start
+```
+---
+Kode tersebut digunakan untuk menginstall setup yang diperlukan oleh load balancer, kemudian jalankan ini pada stilgar
+---
+
+```
+echo nameserver 192.241.3.3 > /etc/resolv.conf
+apt-get update
+apt-get install bind9 nginx -y
+
+echo '
+ upstream myweb  {
+        server 192.241.1.2; #IP Vladimir
+        server 192.241.1.3; #IP Rabban
+        server 192.241.1.4; #IP Feyd
+ }
+
+ server {
+        listen 80;
+        server_name harkonen.it16.com;
+
+        location / {
+        proxy_pass http://myweb;
+        }
+ }' > /etc/nginx/sites-available/lb-jarkom
+
+ln -s /etc/nginx/sites-available/lb-jarkom /etc/nginx/sites-enabled
+rm -rf /etc/nginx/sites-enabled/default
+
+service nginx restart
+nginx -t
+```
+
+---
+Sebelum menjalankan, ubah peta IP address yang semula berada pada vladimir mengarah ke IP Stilgar dengan menjalankan kode ini pada Irulan
+---
+
+```
+echo ';
+; BIND data file for local loopback interface
+;
+$TTL    604800
+@       IN      SOA     harkonen.it16.com.  root.harkonen.it16.com.  (
+                                 2      ; Serial
+                        604800          ; Refresh
+                        86400           ; Retry
+                        2419200         ; Expire
+                        604800 )        ; Negative Cache TTL
+;
+@               IN      NS      harkonen.it16.com.
+@               IN      A       192.241.4.3 ; IP Stilgar Balancer' > /etc/bind/harkonen/harkonen.it16.com
+
+service bind9 restart
+```
+---
+Setelah itu jalankan kode ini pada client (Dimitri/Paul)
+---
+```
+apt-get update
+apt-get install apache2-utils -y
+apt-get install lynx
+```
+---
+Setelah dijalankan, lalu ketik "lynx harkonen.it16.com"
+Hasilnya akan seperti ini:
+---
+
+
+## Soal 7
+Karena setupnya sudah diinstall pada soal sebelumnya, jalankan ini pada client
+
+```
+ab -V
+ab -n 5000 -c 150 http://harkonen.it16.com/
+```
+
+## Soal 8
+Jalankan command ini di client dengan menggunakan algoritma-algoritma yang diinginkan
+```
+ab -n 500 -c 50 http://harkonen.it16.com/
+```
+Untuk perbandingan Hasil Algoritma dapat dilihat di bawah ini
+
+## Soal 9
+Jalankan Command ini di client 
+```
+ab -n 1000 -c 10 http://harkonen.it16.com/
+```
+Agar mengetahui perbedaan 3 worker, 2 worker, 1 worker matikan salah satu worker menggunakan command
+```
+service nginx stop
+```
+
+## Soal 10
+Jalankan kode ini pada Load balancer
+```
+echo nameserver 192.241.3.3 > /etc/resolv.conf
+apt-get install apache2-utils -y
+
+mkdir /etc/nginx/supersecret
+htpasswd -b -c /etc/nginx/supersecret/htpasswd secmart kcksit16
+
+apt-get update
+apt-get install bind9 nginx -y
+
+echo '
+ upstream myweb  {
+        least_conn;
+        server 192.241.1.2; #IP Vladimir
+        server 192.241.1.3; #IP Rabban
+        server 192.241.1.4; #IP Feyd
+ }
+
+ server {
+        listen 80;
+        server_name harkonen.it16.com;
+
+        location / {
+        auth_basic "Restricted Access";
+        auth_basic_user_file /etc/nginx/supersecret/htpasswd;
+        proxy_pass http://myweb;
+        }
+ }' > /etc/nginx/sites-available/lb-jarkom
+
+ln -s /etc/nginx/sites-available/lb-jarkom /etc/nginx/sites-enabled
+rm -rf /etc/nginx/sites-enabled/default
+
+service nginx restart
+nginx -t
+```
+
+Setelah itu gunakan command lynx harkonen.it16.com maka akan muncul hasil seperti ini untuk memasukkan username dan password
+
+(add gambar)
+
+## Soal 11
+Jalankan command ini pada load balancer Stilgar
+```
+echo nameserver 192.241.3.3 > /etc/resolv.conf
+apt-get update
+apt-get install bind9 nginx -y
+
+echo '
+ upstream myweb  {
+        least_conn;
+        server 192.241.1.2; #IP Vladimir
+        server 192.241.1.3; #IP Rabban
+        server 192.241.1.4; #IP Feyd
+ }
+
+ server {
+        listen 80;
+        server_name harkonen.it16.com;
+
+        location / {
+        proxy_pass http://myweb;
+        }
+
+        location /dune/ {
+        proxy_pass https://www.dunemovie.com.au/;
+        }
+ }' > /etc/nginx/sites-available/lb-jarkom
+
+ln -s /etc/nginx/sites-available/lb-jarkom /etc/nginx/sites-enabled
+rm -rf /etc/nginx/sites-enabled/default
+
+service nginx restart
+nginx -t
+```
+Gunakan command "lynx harkonen.it16.com/dune" maka akan muncul seperti ini 
+(add gambar)
+
 ### bagian 2.2
 Tidak mau kalah dalam perburuan spice, House atreides juga mengatur para pekerja di `atreides.yyy.com`.
 - Semua data yang diperlukan, diatur pada Chani dan harus dapat diakses oleh Leto, Duncan, dan Jessica. (13)
