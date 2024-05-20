@@ -405,7 +405,7 @@ Jalankan command ini di client dengan menggunakan algoritma-algoritma yang diing
 ```
 ab -n 500 -c 50 http://harkonen.it16.com/
 ```
-Untuk perbandingan Hasil Algoritma dapat dilihat di bawah ini
+
 
 ## Soal 9
 Jalankan Command ini di client 
@@ -416,6 +416,9 @@ Agar mengetahui perbedaan 3 worker, 2 worker, 1 worker matikan salah satu worker
 ```
 service nginx stop
 ```
+
+## Hasil Soal 8 dan 9
+Untuk melihat hasil nomer 8 dan 9 dapat dilihat di folder Peta yang bernama IT16_Spice.pdf
 
 ## Soal 10
 Jalankan kode ini pada Load balancer
